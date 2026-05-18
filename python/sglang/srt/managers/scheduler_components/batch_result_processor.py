@@ -214,7 +214,7 @@ class SchedulerBatchResultProcessor:
                     # decode req in mixed batch or retracted req
                     continue
 
-                if req.is_chunked <= 0:
+                if req.inflight_middle_chunks <= 0:
                     req.time_stats.set_prefill_finished_time()
 
                     # req output_ids are set here
@@ -263,7 +263,7 @@ class SchedulerBatchResultProcessor:
 
                 else:
                     # being chunked reqs' prefill is not finished
-                    req.is_chunked -= 1
+                    req.inflight_middle_chunks -= 1
                     # There is only at most one request being currently chunked.
                     # Because this request does not finish prefill,
                     # we don't want to stream the request currently being chunked.
@@ -303,7 +303,7 @@ class SchedulerBatchResultProcessor:
                 req.embedding = embeddings[i]
                 if req.return_pooled_hidden_states and phs is not None:
                     req.pooled_hidden_state = phs[i]
-                if req.is_chunked <= 0:
+                if req.inflight_middle_chunks <= 0:
                     req.time_stats.set_prefill_finished_time()
                     # Dummy output token for embedding models
                     req.output_ids.append(0)
@@ -316,7 +316,7 @@ class SchedulerBatchResultProcessor:
                         maybe_cache_unfinished_req(req, self.tree_cache)
                 else:
                     # being chunked reqs' prefill is not finished
-                    req.is_chunked -= 1
+                    req.inflight_middle_chunks -= 1
                     req.time_stats.set_last_chunked_prefill_finish_time()
 
         self.output_streamer.stream_output(
